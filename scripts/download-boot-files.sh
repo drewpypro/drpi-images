@@ -43,10 +43,11 @@ echo "Creating basic configuration files..."
 
 # Basic config.txt for Pi 5
 cat > config.txt << 'EOF'
-# Pi 5 Network Boot Configuration
-[pi5]
+[all]
+arm_64bit=1
+
 kernel=kernel8.img
-initramfs initramfs8 followkernel
+initramfs initramfs.cpio.gz followkernel
 
 # Enable UART for debugging
 enable_uart=1
@@ -55,10 +56,10 @@ enable_uart=1
 gpu_mem=16
 
 # Network boot specific
-dtparam=sd_poll_once=on
+#dtparam=sd_poll_once=on
 
 # USB boot fallback
-program_usb_boot_mode=1
+#program_usb_boot_mode=1
 EOF
 
 # Basic cmdline.txt - will be overridden by our initramfs builder
