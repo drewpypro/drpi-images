@@ -26,9 +26,13 @@ echo "✓ Downloaded start4.elf"
 wget -O fixup4.dat "$FIRMWARE_BASE/fixup4.dat"
 echo "✓ Downloaded fixup4.dat"
 
+wget -O "$DTB_FILE" "$FIRMWARE_BASE/$DTB_FILE" 
+echo "✓ Downloaded $DTB_FILE"
+
 # Pi 5 specific files
 wget -O start4cd.elf "$FIRMWARE_BASE/start4cd.elf" || echo "⚠ start4cd.elf not found (optional)"
 wget -O fixup4cd.dat "$FIRMWARE_BASE/fixup4cd.dat" || echo "⚠ fixup4cd.dat not found (optional)"
+
 
 # Get a basic kernel (we'll replace with custom later)
 wget -O kernel8.img "$FIRMWARE_BASE/kernel8.img"
