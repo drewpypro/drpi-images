@@ -16,9 +16,9 @@ RUN apk add --no-cache \
 RUN mkdir -p /tftpboot /scripts /logs
 
 # Create the main boot script
-COPY boot-server.sh /scripts/boot-server.sh
-COPY download-boot-files.sh /scripts/download-boot-files.sh  
-COPY build-initramfs.sh /scripts/build-initramfs.sh
+COPY /scripts/boot-server.sh /scripts/boot-server.sh
+COPY /scripts/download-boot-files.sh /scripts/download-boot-files.sh  
+COPY /scripts/build-initramfs.sh /scripts/build-initramfs.sh
 
 # Make scripts executable
 RUN chmod +x /scripts/*.sh
