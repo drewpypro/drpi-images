@@ -26,8 +26,5 @@ RUN chmod +x /scripts/*.sh
 # Expose TFTP port
 EXPOSE 69/udp
 
-# Set working directory
-WORKDIR /tftpboot
-
 # Run the main boot script
 CMD ["/scripts/boot-server.sh"]
