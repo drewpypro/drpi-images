@@ -1,67 +1,54 @@
 #!/bin/sh
-# scripts/download-boot-files.sh
-# Downloads essential Pi boot files from Raspberry Pi firmware repo
-
-set -e
+# Sync the *entire* boot/ tree from raspberrypi/firmware into /tftpboot
+set -euo pipefail
 
 echo "=== Downloading Raspberry Pi Boot Files ==="
 
-# Install wget if not available
-apk add --no-cache wget curl
-
-TFTP_DIR="${OUTPUT_DIR:-/tftpboot}"
+TFTP_DIR="${OUTPUT_DIR:-/tftpboot}"   # <— use OUTPUT_DIR consistently
 mkdir -p "$TFTP_DIR"
-cd "$TFTP_DIR"
 
-# Clone/sync only the 'boot' directory from the firmware repo
-# Using git sparse-checkout is cleaner than wget’ing each file
-TMPDIR=$(mktemp -d)
-git clone --depth=1 --filter=blob:none --sparse https://github.com/raspberrypi/firmware.git "$TMPDIR"
-cd "$TMPDIR"
-git sparse-checkout set boot
+# tools (container is Alpine)
+if ! command -v git >/dev/null 2>&1; then
+  apk add --no-cache git
+fi
 
-echo "✓ Cloned firmware repo boot/ folder"
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR"' EXIT
 
-# Copy boot files into TFTP directory
-cp -av boot/* "$TFTP_DIR/"
-cd "$TFTP_DIR"
-rm -rf "$TMPDIR"
+# Sparse checkout just the boot/ directory
+git -C "$TMPDIR" init -q
+git -C "$TMPDIR" remote add origin https://github.com/raspberrypi/firmware.git
+git -C "$TMPDIR" config core.sparseCheckout true
+git -C "$TMPDIR" sparse-checkout set boot
+git -C "$TMPDIR" pull --depth=1 origin master -q
 
-# Create basic config files
-echo "Creating basic configuration files..."
+# Copy/refresh
+rsync -a --delete "$TMPDIR/boot/" "$TFTP_DIR/"
 
-# Basic config.txt for Pi 5
-cat > config.txt << 'EOF'
+# Write our Pi 5 config + cmdline (overrides whatever the repo had)
+cat > "$TFTP_DIR/config.txt" <<'EOF'
+# Pi 5 network boot first stage (kernel + DTB + optional initramfs)
 [all]
 arm_64bit=1
-
 kernel=kernel8.img
+# If you want to be explicit, keep this; Pi usually auto-selects:
+device_tree=bcm2712-rpi-5-b.dtb
+# Our slim RAM installer (you will place this file):
 initramfs initramfs.cpio.gz followkernel
 
-# Enable UART for debugging
 enable_uart=1
-
-# GPU memory split (minimal for headless)
 gpu_mem=16
-
-# Network boot specific
-#dtparam=sd_poll_once=on
-
-# USB boot fallback
-#program_usb_boot_mode=1
+# os_check=0   # optional while aligning kernel/DTB
 EOF
 
-# Basic cmdline.txt - will be overridden by our initramfs builder
-cat > cmdline.txt << 'EOF'
-console=ttyS0,115200 console=tty1 root=/dev/ram0 init=/init quiet
+cat > "$TFTP_DIR/cmdline.txt" <<'EOF'
+console=serial0,115200 console=tty1 ip=dhcp root=/dev/ram0 rw rdinit=/init
 EOF
 
-# Set permissions
-chmod 644 *
+# Permissions for tftpd --secure
+chmod a+rx "$TFTP_DIR"
+find "$TFTP_DIR" -type d -exec chmod a+rx {} \;
+find "$TFTP_DIR" -type f -exec chmod a+r  {} \;
 
-echo ""
 echo "=== Boot Files Download Complete ==="
-echo "Files in TFTP directory:"
-ls -la /output/
-echo ""
-echo "✓ Ready for initramfs build step"
+ls -lah "$TFTP_DIR"
