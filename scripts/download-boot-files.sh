@@ -4,8 +4,6 @@
 
 set -e
 
-DTB_FILE=${DTB_FILE:-""}
-
 echo "=== Downloading Raspberry Pi Boot Files ==="
 
 # Install wget if not available
@@ -28,8 +26,8 @@ echo "✓ Downloaded start4.elf"
 wget -O fixup4.dat "$FIRMWARE_BASE/fixup4.dat"
 echo "✓ Downloaded fixup4.dat"
 
-wget -O "$DTB_FILE" "$FIRMWARE_BASE/$DTB_FILE" 
-echo "✓ Downloaded $DTB_FILE"
+wget -O "bcm2712-rpi-5-b.dtb" "$FIRMWARE_BASE/bcm2712-rpi-5-b.dtb" 
+echo "✓ Downloaded bcm2712-rpi-5-b.dtb"
 
 # Pi 5 specific files
 wget -O start4cd.elf "$FIRMWARE_BASE/start4cd.elf" || echo "⚠ start4cd.elf not found (optional)"
