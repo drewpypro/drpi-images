@@ -13,7 +13,7 @@ RUN apk add --no-cache \
     git
 
 # Create directories
-RUN mkdir -p /tftpboot /scripts /logs
+RUN mkdir -p /tftpboot /scripts /logs /output
 
 # Create the main boot script
 COPY scripts/boot-server.sh /scripts/boot-server.sh
@@ -27,4 +27,4 @@ RUN chmod +x scripts/*.sh
 EXPOSE 69/udp
 
 # Run the main boot script
-CMD ["scripts/boot-server.sh"]
+CMD ["/scripts/boot-server.sh"]
