@@ -1,0 +1,42 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/drpi-images
+
+          # Use branch name or tag as part of the version
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION=${{ github.ref_name }}
+          else
+            VERSION=${{ github.ref_name }}
+          fi
+
+          echo "Building Docker image with version tag: $VERSION"
+
+          # Build the Docker image
+          docker build -t $IMAGE:$VERSION .
+
+          # Push the Docker image with the branch or tag name
+          docker push $IMAGE:$VERSION
+
+          # If this is a release tag, also push as "latest"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            docker tag $IMAGE:$VERSION $IMAGE:latest
+            docker push $IMAGE:latest
+          fi
