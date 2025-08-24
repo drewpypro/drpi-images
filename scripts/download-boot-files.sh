@@ -9,34 +9,23 @@ echo "=== Downloading Raspberry Pi Boot Files ==="
 # Install wget if not available
 apk add --no-cache wget curl
 
-cd ${OUTPUT_FILE:-/tftpboot}
+TFTP_DIR="${OUTPUT_DIR:-/tftpboot}"
+mkdir -p "$TFTP_DIR"
+cd "$TFTP_DIR"
 
-# Base URL for Pi firmware
-FIRMWARE_BASE="https://github.com/raspberrypi/firmware/raw/master/boot"
+# Clone/sync only the 'boot' directory from the firmware repo
+# Using git sparse-checkout is cleaner than wget’ing each file
+TMPDIR=$(mktemp -d)
+git clone --depth=1 --filter=blob:none --sparse https://github.com/raspberrypi/firmware.git "$TMPDIR"
+cd "$TMPDIR"
+git sparse-checkout set boot
 
-echo "Downloading Pi bootloader files..."
+echo "✓ Cloned firmware repo boot/ folder"
 
-# Essential boot files for Pi 5
-wget -O bootcode.bin "$FIRMWARE_BASE/bootcode.bin"
-echo "✓ Downloaded bootcode.bin"
-
-wget -O start4.elf "$FIRMWARE_BASE/start4.elf"  
-echo "✓ Downloaded start4.elf"
-
-wget -O fixup4.dat "$FIRMWARE_BASE/fixup4.dat"
-echo "✓ Downloaded fixup4.dat"
-
-wget -O "bcm2712-rpi-5-b.dtb" "$FIRMWARE_BASE/bcm2712-rpi-5-b.dtb" 
-echo "✓ Downloaded bcm2712-rpi-5-b.dtb"
-
-# Pi 5 specific files
-wget -O start4cd.elf "$FIRMWARE_BASE/start4cd.elf" || echo "⚠ start4cd.elf not found (optional)"
-wget -O fixup4cd.dat "$FIRMWARE_BASE/fixup4cd.dat" || echo "⚠ fixup4cd.dat not found (optional)"
-
-
-# Get a basic kernel (we'll replace with custom later)
-wget -O kernel8.img "$FIRMWARE_BASE/kernel8.img"
-echo "✓ Downloaded kernel8.img"
+# Copy boot files into TFTP directory
+cp -av boot/* "$TFTP_DIR/"
+cd "$TFTP_DIR"
+rm -rf "$TMPDIR"
 
 # Create basic config files
 echo "Creating basic configuration files..."
