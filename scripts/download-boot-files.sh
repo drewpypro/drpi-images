@@ -4,6 +4,8 @@
 
 set -e
 
+DTB_FILE=${DTB_FILE:-""}
+
 echo "=== Downloading Raspberry Pi Boot Files ==="
 
 # Install wget if not available
