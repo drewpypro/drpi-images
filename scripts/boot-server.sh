@@ -80,33 +80,35 @@ build_initramfs() {
 
 # Function to start TFTP server
 start_tftp_server() {
-    log "Starting TFTP server..."
-    
-    # Kill any existing TFTP processes
-    pkill -f "in.tftpd" 2>/dev/null || true
-    
-    # Start TFTP server in background
-    /usr/sbin/in.tftpd \
-        --listen \
-        --user root \
-        --address :69 \
-        --secure \
-        --create \
-        --verbose \
-        "$TFTPBOOT_DIR" 2>&1 | tee -a "$LOG_FILE" &
-    
-    local tftp_pid=$!
-    sleep 2
-    
-    # Check if TFTP server is running
-    if kill -0 "$tftp_pid" 2>/dev/null; then
-        log "✓ TFTP server started successfully (PID: $tftp_pid)"
-        return 0
-    else
-        log "✗ Failed to start TFTP server"
-        return 1
-    fi
+  log "Starting TFTP server..."
+
+  pkill -f "in.tftpd" 2>/dev/null || true
+
+  # Ensure perms are OK for --secure
+  chmod a+rx /tftpboot 2>/dev/null || true
+  find /tftpboot -type f -exec chmod a+r {} \; 2>/dev/null || true
+
+  # Run foreground (-L) so we capture the real exit code & logs
+  /usr/sbin/in.tftpd -L -v \
+    --user root \
+    -a 0.0.0.0:69 \
+    -s /tftpboot \
+    --create \
+    >>"$LOG_FILE" 2>&1 &
+
+  tftp_pid=$!
+  sleep 1
+
+  if kill -0 "$tftp_pid" 2>/dev/null; then
+    log "✓ TFTP server started successfully (PID: $tftp_pid)"
+    return 0
+  else
+    log "✗ Failed to start TFTP server; recent log tail:"
+    tail -n 50 "$LOG_FILE" || true
+    return 1
+  fi
 }
+
 
 # Function to check git for updates
 check_git_updates() {
