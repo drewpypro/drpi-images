@@ -21,7 +21,7 @@ COPY scripts/download-boot-files.sh /scripts/download-boot-files.sh
 COPY scripts/build-initramfs.sh /scripts/build-initramfs.sh
 
 # Make scripts executable
-RUN chmod +x /scripts/*.sh
+RUN chmod +x scripts/*.sh
 
 # Expose TFTP port
 EXPOSE 69/udp
