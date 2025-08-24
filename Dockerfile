@@ -23,10 +23,6 @@ COPY /scripts/build-initramfs.sh /scripts/build-initramfs.sh
 # Make scripts executable
 RUN chmod +x /scripts/*.sh
 
-# Configure TFTP
-RUN echo 'TFTP_DIRECTORY="/tftpboot"' > /etc/conf.d/in.tftpd && \
-    echo 'TFTP_OPTIONS="--secure --create --verbose"' >> /etc/conf.d/in.tftpd
-
 # Expose TFTP port
 EXPOSE 69/udp
 

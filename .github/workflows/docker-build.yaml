@@ -5,6 +5,9 @@ on:
     tags:
       - "v*.*.*"
       
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: drpi-images
       
 jobs:
   build:
