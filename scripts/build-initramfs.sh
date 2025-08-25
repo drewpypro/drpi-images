@@ -48,7 +48,7 @@ if wget -q "$BUSYBOX_URL" -O busybox-static.apk; then
     fi
     
     # Clean up extraction
-    rm -rf .SIGN.RSA* .PKGINFO bin usr sbin etc 2>/dev/null || true
+    rm -rf .SIGN.RSA* .PKGINFO usr sbin etc 2>/dev/null || true
     rm -f busybox-static.apk
 else
     echo "ERROR: Could not download ARM64 busybox package"
