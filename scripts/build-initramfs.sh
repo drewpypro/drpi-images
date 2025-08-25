@@ -37,13 +37,11 @@ if wget -q "$BUSYBOX_URL" -O busybox-static.apk; then
     # Extract the APK (it's just a tar.gz)
     tar -xzf busybox-static.apk >/dev/null 2>&1
     
-    # Find the busybox binary in the extracted files
-    if [ -f "bin/busybox" ]; then
-        mv bin/busybox "$WORK_DIR/bin/busybox"
-    elif [ -f "usr/bin/busybox" ]; then
-        mv usr/bin/busybox "$WORK_DIR/bin/busybox"
+    # Move the busybox.static binary
+    if [ -f "bin/busybox.static" ]; then
+        mv bin/busybox.static "$WORK_DIR/bin/busybox"
     else
-        echo "ERROR: Could not find busybox in ARM64 package"
+        echo "ERROR: Could not find bin/busybox.static in ARM64 package"
         echo "Package contents:"
         find . -name "*busybox*" -type f
         exit 1
@@ -56,6 +54,7 @@ else
     echo "ERROR: Could not download ARM64 busybox package"
     exit 1
 fi
+
 
 chmod +x "$WORK_DIR/bin/busybox"
 
