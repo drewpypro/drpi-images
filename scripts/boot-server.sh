@@ -83,7 +83,7 @@ check_git_updates() {
 
 main_init() {
   log "Initial setup…"
-  if ! check_boot_files || [[ "$FO RCE_REBUILD" == "true" ]]; then
+  if ! check_boot_files || [[ "$FORCE_REBUILD" == "true" ]]; then
     download_boot_files
   else
     log "✓ Boot files already present"
