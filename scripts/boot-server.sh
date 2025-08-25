@@ -42,8 +42,8 @@ download_boot_files() {
 
 build_initramfs() {
   log "Building initramfs..."
-  # Set OUTPUT_FILE so build script knows where to write
-  OUTPUT_FILE="$TFTPBOOT_DIR/initramfs.cpio.gz" /scripts/build-initramfs.sh 2>>"$LOG_FILE"
+  # Show ALL output - no hiding anything
+  OUTPUT_FILE="$TFTPBOOT_DIR/initramfs.cpio.gz" /scripts/build-initramfs.sh
   log "Initramfs built at $TFTPBOOT_DIR/initramfs.cpio.gz"
 }
 
