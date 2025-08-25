@@ -9,7 +9,7 @@ mkdir -p "$TFTP_DIR"
 
 # tools (container is Alpine)
 if ! command -v git >/dev/null 2>&1; then
-  apk add --no-cache git rsync
+  apk add --no-cache git
 fi
 
 TMPDIR="$(mktemp -d)"
@@ -23,6 +23,10 @@ git -C "$TMPDIR" sparse-checkout set boot
 git -C "$TMPDIR" pull --depth=1 origin master -q
 
 # Copy/refresh
+if ! command -v rsync >/devn/null 2>&1; then
+  apk add --no-cache rsync
+fi
+
 rsync -a --delete "$TMPDIR/boot/" "$TFTP_DIR/"
 
 # Write our Pi 5 config + cmdline (overrides whatever the repo had)
