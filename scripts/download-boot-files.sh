@@ -9,7 +9,7 @@ mkdir -p "$TFTP_DIR"
 
 # tools (container is Alpine)
 if ! command -v git >/dev/null 2>&1; then
-  apk add --no-cache git
+  apk add --no-cache git rsync
 fi
 
 TMPDIR="$(mktemp -d)"
