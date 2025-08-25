@@ -28,30 +28,9 @@ echo "2. Downloading ARM64 busybox for Pi..."
 # Download ARM64 busybox from Alpine's aarch64 repository
 cd "$WORK_DIR"
 
-echo "Finding latest ARM64 busybox-static package..."
-ALPINE_REPO="https://dl-cdn.alpinelinux.org/alpine/v3.19/main/aarch64"
+echo "Downloading ARM64 busybox package..."
+BUSYBOX_URL="https://dl-cdn.alpinelinux.org/alpine/v3.19/main/aarch64/busybox-static-1.36.1-r20.apk"
 
-# Get the package index and find the busybox-static package
-if wget -q "$ALPINE_REPO/APKINDEX.tar.gz" -O /tmp/APKINDEX.tar.gz; then
-    # Extract and search for busybox-static
-    tar -xzf /tmp/APKINDEX.tar.gz -C /tmp APKINDEX
-    BUSYBOX_PACKAGE=$(grep -A5 "^P:busybox-static$" /tmp/APKINDEX | grep "^V:" | head -1 | cut -d: -f2)
-    
-    if [ -n "$BUSYBOX_PACKAGE" ]; then
-        BUSYBOX_URL="$ALPINE_REPO/busybox-static-${BUSYBOX_PACKAGE}.apk"
-        echo "Found busybox-static version: $BUSYBOX_PACKAGE"
-    else
-        echo "Could not find busybox-static in package index, using fallback..."
-        BUSYBOX_URL="$ALPINE_REPO/busybox-static-1.36.1-r20.apk"
-    fi
-    
-    rm -f /tmp/APKINDEX.tar.gz /tmp/APKINDEX
-else
-    echo "Could not fetch package index, using fallback URL..."
-    BUSYBOX_URL="$ALPINE_REPO/busybox-static-1.36.1-r20.apk"
-fi
-
-echo "Downloading: $BUSYBOX_URL"
 if wget -q "$BUSYBOX_URL" -O busybox-static.apk; then
     echo "Downloaded ARM64 busybox package"
     
