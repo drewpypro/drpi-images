@@ -126,18 +126,16 @@ done
 mkdir -p "$WORK_DIR/etc/ssl/certs"
 
 cd "$WORK_DIR"
-
 echo "✓ ARM64 busybox obtained successfully from $BUSYBOX_APK"
 
-# Create essential command symlinks
+# Create essential command symlinks including wget
 cd bin
-for cmd in sh ash cat cp mv rm ls ln mkdir mount umount tar gzip gunzip \
+for cmd in sh ash cat cp mv rm ls ln mkdir mount umount wget tar gzip gunzip \
            ip ping udhcpc grep awk sed cut sort head tail find xargs sleep \
            echo printf test tr dd blkid lsblk fdisk mkfs.ext4 mkfs.fat \
            switch_root reboot poweroff modprobe; do
     ln -sf busybox "$cmd"
 done
-# Note: wget NOT included - using real wget from /usr/bin/wget
 cd ..
 
 # Also link in sbin
@@ -240,7 +238,7 @@ cd /tmp
 DOWNLOAD_SUCCESS=0
 
 echo "Attempting download from github..."
-if wget "https://github.com/drewpypro/drpi-images/raw/main/alpine/alpine-rpi-latest.tar.gz" -O alpine.tar.gz 2>/dev/null; then
+if wget --no-check-certificate "https://github.com/drewpypro/drpi-images/raw/main/alpine/alpine-rpi-latest.tar.gz" -O alpine.tar.gz 2>/dev/null; then
     echo "✓ Downloaded Alpine from github"
     DOWNLOAD_SUCCESS=1
 else
@@ -249,7 +247,7 @@ fi
 
 if [ $DOWNLOAD_SUCCESS -eq 0 ]; then
     echo "Attempting download from Alpine official repository..."
-    if wget "https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/aarch64/alpine-minirootfs-3.19.0-aarch64.tar.gz" -O alpine.tar.gz; then
+    if wget --no-check-certificate "https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/aarch64/alpine-minirootfs-3.19.0-aarch64.tar.gz" -O alpine.tar.gz; then
         echo "✓ Downloaded Alpine from official repository"
         DOWNLOAD_SUCCESS=1
     fi
@@ -257,7 +255,7 @@ fi
 
 if [ $DOWNLOAD_SUCCESS -eq 0 ]; then
     echo "Trying Alpine 3.18 as fallback..."
-    if wget "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/aarch64/alpine-minirootfs-3.18.4-aarch64.tar.gz" -O alpine.tar.gz; then
+    if wget --no-check-certificate "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/aarch64/alpine-minirootfs-3.18.4-aarch64.tar.gz" -O alpine.tar.gz; then
         echo "✓ Downloaded Alpine 3.18 (fallback)"
         DOWNLOAD_SUCCESS=1
     fi
