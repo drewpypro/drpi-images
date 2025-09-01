@@ -247,7 +247,7 @@ fi
 
 if [ $DOWNLOAD_SUCCESS -eq 0 ]; then
     echo "Attempting download from Alpine official repository..."
-    if wget --no-check-certificate "https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/aarch64/alpine-minirootfs-3.19.0-aarch64.tar.gz" -O alpine.tar.gz; then
+    if wget --no-check-certificate "https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/aarch64/alpine-rpi-3.19.0-aarch64.tar.gz" -O alpine.tar.gz; then
         echo "✓ Downloaded Alpine from official repository"
         DOWNLOAD_SUCCESS=1
     fi
@@ -255,7 +255,7 @@ fi
 
 if [ $DOWNLOAD_SUCCESS -eq 0 ]; then
     echo "Trying Alpine 3.18 as fallback..."
-    if wget --no-check-certificate "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/aarch64/alpine-minirootfs-3.18.4-aarch64.tar.gz" -O alpine.tar.gz; then
+    if wget --no-check-certificate "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/aarch64/alpine-rpi-3.18.5-aarch64.tar.gz" -O alpine.tar.gz; then
         echo "✓ Downloaded Alpine 3.18 (fallback)"
         DOWNLOAD_SUCCESS=1
     fi
