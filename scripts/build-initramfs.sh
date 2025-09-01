@@ -44,28 +44,50 @@ mknod -m 660 dev/tty0 c 4 0
 mknod -m 660 dev/tty1 c 4 1
 mknod -m 660 dev/ttyS0 c 4 64
 
-# Find where busybox-static was installed
-echo "Finding busybox binary location..."
-
-# Download ARM64 busybox directly instead of using the container's version
+# Download ARM64 busybox directly
 echo "Downloading ARM64 busybox binary..."
-wget -O "$WORK_DIR/bin/busybox" "https://busybox.net/downloads/binaries/1.35.0-aarch64-linux-musl/busybox"
 
-if [ ! -f "$WORK_DIR/bin/busybox" ]; then
-    echo "ERROR: Failed to download ARM64 busybox"
+# Fetch the latest busybox-static package for aarch64
+ALPINE_REPO="https://dl-cdn.alpinelinux.org/alpine/v3.19/main/aarch64"
+echo "Fetching package list from Alpine repository..."
+
+# Get the latest busybox-static package name
+BUSYBOX_APK=$(wget -qO- "$ALPINE_REPO/" | grep -o 'busybox-static-[^"]*\.apk' | head -1)
+
+if [ -z "$BUSYBOX_APK" ]; then
+    echo "ERROR: Could not find busybox-static package"
+    exit 1
+fi
+
+echo "Found package: $BUSYBOX_APK"
+
+# Download and extract the APK
+cd /tmp
+wget -q "$ALPINE_REPO/$BUSYBOX_APK"
+
+# APK files are gzipped tar archives with special structure
+mkdir -p apk-extract
+cd apk-extract
+tar -xzf "../$BUSYBOX_APK" 2>/dev/null
+
+# The busybox binary is usually in bin/ or sbin/
+if [ -f "bin/busybox.static" ]; then
+    cp "bin/busybox.static" "$WORK_DIR/bin/busybox"
+elif [ -f "sbin/busybox.static" ]; then
+    cp "sbin/busybox.static" "$WORK_DIR/bin/busybox"
+elif [ -f "bin/busybox" ]; then
+    cp "bin/busybox" "$WORK_DIR/bin/busybox"
+else
+    echo "ERROR: Could not find busybox binary in APK"
+    ls -la bin/ sbin/ 2>/dev/null
     exit 1
 fi
 
 chmod +x "$WORK_DIR/bin/busybox"
+cd "$WORK_DIR"
+rm -rf /tmp/apk-extract /tmp/$BUSYBOX_APK
 
-# Verify it's an ARM64 binary
-file "$WORK_DIR/bin/busybox" | grep -q "aarch64\|ARM" || {
-    echo "ERROR: Downloaded busybox is not ARM64!"
-    file "$WORK_DIR/bin/busybox"
-    exit 1
-}
-
-echo "✓ ARM64 busybox downloaded successfully"
+echo "✓ ARM64 busybox obtained successfully from $BUSYBOX_APK"
 
 # Create essential command symlinks
 cd bin
@@ -171,12 +193,12 @@ cd /tmp
 # Try multiple Alpine sources (your git repo first, then official)
 DOWNLOAD_SUCCESS=0
 
-echo "Attempting download from git.drewpy.pro..."
-if wget "https://git.drewpy.pro/drewpypro/rpi-images/raw/main/alpine/alpine-rpi-latest.tar.gz" -O alpine.tar.gz 2>/dev/null; then
-    echo "✓ Downloaded Alpine from git.drewpy.pro"
+echo "Attempting download from github..."
+if wget "https://github.com/drewpypro/drpi-images/raw/main/alpine/alpine-rpi-latest.tar.gz" -O alpine.tar.gz 2>/dev/null; then
+    echo "✓ Downloaded Alpine from github"
     DOWNLOAD_SUCCESS=1
 else
-    echo "⚠ git.drewpy.pro not available (repo not created yet)"
+    echo "⚠ github not available (repo not created yet)"
 fi
 
 if [ $DOWNLOAD_SUCCESS -eq 0 ]; then
@@ -198,7 +220,7 @@ fi
 if [ $DOWNLOAD_SUCCESS -eq 0 ]; then
     echo "ERROR: Could not download Alpine Linux from any source"
     echo "Sources tried:"
-    echo "1. git.drewpy.pro/drewpypro/rpi-images (custom repo)"
+    echo "1. github.com/drewpypro/drpi-images"
     echo "2. Alpine 3.19 official"  
     echo "3. Alpine 3.18 fallback"
     echo "Check network connectivity"
