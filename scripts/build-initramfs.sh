@@ -98,6 +98,21 @@ if [ -n "$WGET_APK" ]; then
     tar -xzf "$WGET_APK" -C "$WORK_DIR" 2>/dev/null
 fi
 
+# Verify wget was extracted and make it available
+if [ -f "$WORK_DIR/usr/bin/wget" ]; then
+    echo "Found wget at usr/bin/wget"
+    chmod +x "$WORK_DIR/usr/bin/wget"
+elif [ -f "$WORK_DIR/bin/wget" ]; then
+    echo "Found wget at bin/wget"
+    chmod +x "$WORK_DIR/bin/wget"
+else
+    echo "WARNING: wget binary not found after extraction"
+    # Fall back to busybox wget
+    cd "$WORK_DIR/bin"
+    ln -sf busybox wget
+    cd "$WORK_DIR"
+fi
+
 # Get SSL libraries and certificates
 for pkg in libssl3 libcrypto3 ca-certificates-bundle; do
     PKG_NAME=$(wget -qO- "$ALPINE_REPO/" | grep -o "${pkg}-[^\"]*\.apk" | head -1)
