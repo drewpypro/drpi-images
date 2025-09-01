@@ -141,7 +141,12 @@ ip link set eth0 up
 
 # Get IP via DHCP
 echo "Requesting IP address via DHCP..."
-udhcpc -i eth0 -n -q
+udhcpc -i eth0 -n -q -O dns
+
+# Set DNS servers manually if needed
+echo "Setting DNS servers..."
+echo "nameserver 192.168.1.57" > /etc/resolv.conf
+echo "nameserver 192.168.2.57" >> /etc/resolv.conf
 
 # Show network status
 IP=$(ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
@@ -246,6 +251,12 @@ iface lo inet loopback
 auto eth0  
 iface eth0 inet dhcp
 NET_EOF
+
+# Add DNS configuration
+cat > /mnt/root/etc/resolv.conf << 'DNS_EOF'
+nameserver 192.168.1.57
+nameserver 192.168.2.57
+DNS_EOF
 
 # Configure repositories (ARM64)
 cat > /mnt/root/etc/apk/repositories << 'REPO_EOF'
