@@ -1,5 +1,5 @@
 # Dockerfile for Pi Network Boot Server
-FROM --platform=linux/arm64 alpine:latest
+FROM alpine:latest
 
 # Install required packages
 RUN apk add --no-cache \
