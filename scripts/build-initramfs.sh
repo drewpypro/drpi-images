@@ -133,7 +133,7 @@ cd bin
 for cmd in sh ash cat cp mv rm ls ln mkdir mount umount wget tar gzip gunzip \
            ip ping udhcpc grep awk sed cut sort head tail find xargs sleep \
            echo printf test tr dd blkid lsblk fdisk mkfs.ext4 mkfs.fat \
-           switch_root reboot poweroff modprobe; do
+           switch_root reboot poweroff modprobe sync; do
     ln -sf busybox "$cmd"
 done
 cd ..
@@ -374,7 +374,7 @@ echo "Rebooting in 5 seconds..."
 sleep 5
 
 # Reboot
-echo b > /proc/sysrq-trigger
+reboot || echo b > /proc/sysrq-trigger || echo "Reboot failed - please manually reboot"
 EOF
 
 chmod +x init
