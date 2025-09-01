@@ -7,7 +7,7 @@ set -e
 echo "=== Building Custom InitramFS for Pi Network Boot ==="
 
 # Install build tools
-apk add --no-cache wget cpio gzip findutils
+apk add --no-cache wget cpio gzip findutils file
 
 WORK_DIR="/tmp/initramfs-build"
 OUTPUT_FILE="${OUTPUT_FILE:-/tftpboot/initramfs8}"
@@ -46,28 +46,26 @@ mknod -m 660 dev/ttyS0 c 4 64
 
 # Find where busybox-static was installed
 echo "Finding busybox binary location..."
-BUSYBOX_PATH=$(which busybox 2>/dev/null || find /bin /sbin /usr/bin /usr/sbin -name "busybox*" -type f 2>/dev/null | head -1)
 
-if [ -z "$BUSYBOX_PATH" ]; then
-    echo "ERROR: Could not find busybox binary"
+# Download ARM64 busybox directly instead of using the container's version
+echo "Downloading ARM64 busybox binary..."
+wget -O "$WORK_DIR/bin/busybox" "https://busybox.net/downloads/binaries/1.35.0-aarch64-linux-musl/busybox"
+
+if [ ! -f "$WORK_DIR/bin/busybox" ]; then
+    echo "ERROR: Failed to download ARM64 busybox"
     exit 1
 fi
 
-echo "Found busybox at: $BUSYBOX_PATH"
-
-# Copy busybox to our initramfs (use full path to be safe)
-cp "$BUSYBOX_PATH" "$WORK_DIR/bin/busybox"
 chmod +x "$WORK_DIR/bin/busybox"
 
-# Verify it's working
-cd "$WORK_DIR"
-if ! ./bin/busybox --help > /dev/null 2>&1; then
-    echo "ERROR: Busybox is not working properly"
-    file ./bin/busybox
+# Verify it's an ARM64 binary
+file "$WORK_DIR/bin/busybox" | grep -q "aarch64\|ARM" || {
+    echo "ERROR: Downloaded busybox is not ARM64!"
+    file "$WORK_DIR/bin/busybox"
     exit 1
-fi
+}
 
-echo "✓ ARM64 busybox installed successfully"
+echo "✓ ARM64 busybox downloaded successfully"
 
 # Create essential command symlinks
 cd bin
