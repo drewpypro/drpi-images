@@ -172,7 +172,7 @@ fi
 
 # Mount USB partitions
 echo "Mounting USB partitions..."
-mkdir -p /mnt/{boot,root}
+mkdir -p /mnt/boot /mnt/root
 
 if ! mount "${USB_DEVICE}1" /mnt/boot; then
     echo "ERROR: Could not mount boot partition ${USB_DEVICE}1"
