@@ -10,7 +10,7 @@ echo "=== Building Custom InitramFS for Pi Network Boot ==="
 apk add --no-cache wget cpio gzip findutils
 
 WORK_DIR="/tmp/initramfs-build"
-OUTPUT_FILE="${OUTPUT_FILE:-/tftpboot/initramfs.cpio.gz}"
+OUTPUT_FILE="/output/initramfs8"
 
 # Clean and create working directory
 rm -rf "$WORK_DIR"
@@ -24,51 +24,39 @@ mkdir -p usr/bin usr/sbin
 echo "Directory structure created:"
 ls -la
 
-echo "2. Downloading ARM64 busybox for Pi..."
-# Download ARM64 busybox from Alpine's aarch64 repository
+echo "2. Installing ARM64 busybox for Pi..."
+# Use Alpine's own busybox-static (most reliable for ARM64)
+apk add --no-cache busybox-static
+
+# Make sure we're in the right directory
 cd "$WORK_DIR"
+echo "Current directory: $(pwd)"
+echo "Contents: $(ls -la)"
 
-echo "Downloading ARM64 busybox package..."
-BUSYBOX_URL="https://dl-cdn.alpinelinux.org/alpine/v3.19/main/aarch64/busybox-static-1.36.1-r20.apk"
+# Find where busybox-static was installed
+echo "Finding busybox binary location..."
+BUSYBOX_PATH=$(which busybox 2>/dev/null || find /bin /sbin /usr/bin /usr/sbin -name "busybox*" -type f 2>/dev/null | head -1)
 
-if wget -q "$BUSYBOX_URL" -O busybox-static.apk; then
-    echo "Downloaded ARM64 busybox package"
-    
-    # Extract the APK (it's just a tar.gz)
-    tar -xzf busybox-static.apk >/dev/null 2>&1
-    
-    # Move the busybox.static binary (avoid path conflicts)
-    if [ -f "bin/busybox.static" ]; then
-        cp bin/busybox.static "$WORK_DIR/bin/busybox"  # Use cp instead of mv
-        echo "Copied busybox.static to $WORK_DIR/bin/busybox"
-    else
-        echo "ERROR: Could not find bin/busybox.static in ARM64 package"
-        echo "Package contents:"
-        find . -name "*busybox*" -type f
-        exit 1
-    fi
-    
-    # Clean up extraction
-    rm -rf .SIGN.RSA* .PKGINFO bin usr sbin etc 2>/dev/null || true
-    rm -f busybox-static.apk
-else
-    echo "ERROR: Could not download ARM64 busybox package"
+if [ -z "$BUSYBOX_PATH" ]; then
+    echo "ERROR: Could not find busybox binary"
     exit 1
 fi
 
+echo "Found busybox at: $BUSYBOX_PATH"
+
+# Copy busybox to our initramfs (use full path to be safe)
+cp "$BUSYBOX_PATH" "$WORK_DIR/bin/busybox"
 chmod +x "$WORK_DIR/bin/busybox"
 
-# Verify we got ARM64 binary
-echo "Verifying ARM64 busybox binary..."
-file "$WORK_DIR/bin/busybox"
-
-if file "$WORK_DIR/bin/busybox" | grep -q "aarch64\|ARM"; then
-    echo "✓ ARM64 busybox binary confirmed"
-else
-    echo "⚠ Binary architecture may not be ARM64:"
-    file "$WORK_DIR/bin/busybox"
-    echo "Continuing anyway..."
+# Verify it's working
+cd "$WORK_DIR"
+if ! ./bin/busybox --help > /dev/null 2>&1; then
+    echo "ERROR: Busybox is not working properly"
+    file ./bin/busybox
+    exit 1
 fi
+
+echo "✓ ARM64 busybox installed successfully"
 
 # Create essential command symlinks
 cd bin
@@ -142,7 +130,7 @@ fi
 
 # Mount USB partitions
 echo "Mounting USB partitions..."
-mkdir -p /mnt/boot /mnt/root
+mkdir -p /mnt/{boot,root}
 
 if ! mount "${USB_DEVICE}1" /mnt/boot; then
     echo "ERROR: Could not mount boot partition ${USB_DEVICE}1"
@@ -306,6 +294,11 @@ mknod dev/zero c 1 5
 
 echo "5. Building initramfs archive..."
 find . | cpio -o -H newc | gzip -9 > "$OUTPUT_FILE"
+
+echo "6. Creating updated cmdline.txt..."
+cat > /output/cmdline.txt << 'EOF'
+console=ttyS0,115200 console=tty1 root=/dev/ram0 init=/init rw
+EOF
 
 echo ""
 echo "=== InitramFS Build Complete! ==="

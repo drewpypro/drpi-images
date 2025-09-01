@@ -1,5 +1,5 @@
 # drpi-images
-- repo for various images & scripts for my pi5
+- repo for various images & scripts for pi5 bootloading
 
 ## Repo
 ```
@@ -9,7 +9,6 @@ drpi-images/
 ├── arch/
 └── configs/
 ```
-
 
 - **TFTP Server (localhost)**:
   - bootcode.bin - Pi bootloader
