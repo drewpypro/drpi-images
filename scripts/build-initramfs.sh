@@ -87,16 +87,42 @@ chmod +x "$WORK_DIR/bin/busybox"
 cd "$WORK_DIR"
 rm -rf /tmp/apk-extract /tmp/$BUSYBOX_APK
 
+# Download full wget with SSL support
+echo "Adding SSL support for secure downloads..."
+cd /tmp
+
+# Get wget with SSL
+WGET_APK=$(wget -qO- "$ALPINE_REPO/" | grep -o 'wget-[^"]*\.apk' | head -1)
+if [ -n "$WGET_APK" ]; then
+    wget -q "$ALPINE_REPO/$WGET_APK"
+    tar -xzf "$WGET_APK" -C "$WORK_DIR" 2>/dev/null
+fi
+
+# Get SSL libraries and certificates
+for pkg in libssl3 libcrypto3 ca-certificates-bundle; do
+    PKG_NAME=$(wget -qO- "$ALPINE_REPO/" | grep -o "${pkg}-[^\"]*\.apk" | head -1)
+    if [ -n "$PKG_NAME" ]; then
+        wget -q "$ALPINE_REPO/$PKG_NAME"
+        tar -xzf "$PKG_NAME" -C "$WORK_DIR" 2>/dev/null
+    fi
+done
+
+# Create certificates directory
+mkdir -p "$WORK_DIR/etc/ssl/certs"
+
+cd "$WORK_DIR"
+
 echo "✓ ARM64 busybox obtained successfully from $BUSYBOX_APK"
 
 # Create essential command symlinks
 cd bin
-for cmd in sh ash cat cp mv rm ls ln mkdir mount umount wget tar gzip gunzip \
+for cmd in sh ash cat cp mv rm ls ln mkdir mount umount tar gzip gunzip \
            ip ping udhcpc grep awk sed cut sort head tail find xargs sleep \
            echo printf test tr dd blkid lsblk fdisk mkfs.ext4 mkfs.fat \
            switch_root reboot poweroff modprobe; do
     ln -sf busybox "$cmd"
 done
+# Note: wget NOT included - using real wget from /usr/bin/wget
 cd ..
 
 # Also link in sbin
