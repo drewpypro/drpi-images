@@ -4,41 +4,39 @@ on:
   push:
     tags:
       - "v*.*.*"
-
+      
+      
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: actions/checkout@v3
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/drpi-images
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=raw,value=latest,enable={{is_default_branch}}
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/drpi-images
+
+          # Use branch name or tag as part of the version
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION=${{ github.ref_name }}
+          else
+            VERSION=${{ github.ref_name }}
+          fi
+
+          echo "Building Docker image with version tag: $VERSION"
+
+          # Build the Docker image
+          docker build -t $IMAGE:$VERSION .
+
+          # Push the Docker image with the branch or tag name
+          docker push $IMAGE:$VERSION
+
+          # If this is a release tag, also push as "latest"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            docker tag $IMAGE:$VERSION $IMAGE:latest
+            docker push $IMAGE:latest
+          fi
