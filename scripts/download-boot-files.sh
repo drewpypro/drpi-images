@@ -38,7 +38,7 @@ kernel=kernel8.img
 # If you want to be explicit, keep this; Pi usually auto-selects:
 device_tree=bcm2712-rpi-5-b.dtb
 # Our slim RAM installer (you will place this file):
-initramfs initramfs.cpio.gz followkernel
+initramfs initramfs8 followkernel
 
 enable_uart=1
 gpu_mem=16

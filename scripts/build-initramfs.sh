@@ -10,7 +10,7 @@ echo "=== Building Custom InitramFS for Pi Network Boot ==="
 apk add --no-cache wget cpio gzip findutils
 
 WORK_DIR="/tmp/initramfs-build"
-OUTPUT_FILE="/output/initramfs8"
+OUTPUT_FILE="${OUTPUT_FILE:-/tftpboot/initramfs8}"
 
 # Clean and create working directory
 rm -rf "$WORK_DIR"
@@ -296,7 +296,7 @@ echo "5. Building initramfs archive..."
 find . | cpio -o -H newc | gzip -9 > "$OUTPUT_FILE"
 
 echo "6. Creating updated cmdline.txt..."
-cat > /output/cmdline.txt << 'EOF'
+cat > "$(dirname "$OUTPUT_FILE")/cmdline.txt" << 'EOF'
 console=ttyS0,115200 console=tty1 root=/dev/ram0 init=/init rw
 EOF
 

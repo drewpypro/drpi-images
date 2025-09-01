@@ -24,7 +24,7 @@ check_boot_files() {
 }
 
 check_initramfs() {
-  local f="initramfs.cpio.gz"     # <— standardize on this name
+  local f="initramfs8"     # <— standardize on this name
   if [[ ! -f "$f" ]]; then log "Missing $f"; return 1; fi
   local size; size=$(stat -c%s "$f" || echo 0)
   if [[ "$size" -lt 102400 ]]; then
@@ -43,8 +43,8 @@ download_boot_files() {
 build_initramfs() {
   log "Building initramfs..."
   # Show ALL output - no hiding anything
-  OUTPUT_FILE="$TFTPBOOT_DIR/initramfs.cpio.gz" /scripts/build-initramfs.sh
-  log "Initramfs built at $TFTPBOOT_DIR/initramfs.cpio.gz"
+  OUTPUT_FILE="$TFTPBOOT_DIR/initramfs8" /scripts/build-initramfs.sh
+  log "Initramfs built at $TFTPBOOT_DIR/initramfs8"
 }
 
 start_tftp_server() {
@@ -111,7 +111,7 @@ monitoring_loop() {
       download_boot_files || log "Download failed"
       build_initramfs || log "Initramfs build failed"
     fi
-    local sz=$(stat -c%s "$TFTPBOOT_DIR/initramfs.cpio.gz" 2>/dev/null || echo 0)
+    local sz=$(stat -c%s "$TFTPBOOT_DIR/initramfs8" 2>/dev/null || echo 0)
     log "Status: TFTP up, initramfs size ${sz} bytes"
   done
 }
