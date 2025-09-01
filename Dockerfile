@@ -10,7 +10,9 @@ RUN apk add --no-cache \
     findutils \
     curl \
     bash \
-    git
+    git \
+    rsync \
+    busybox-static
 
 # Create directories
 RUN mkdir -p /tftpboot /scripts /logs /output

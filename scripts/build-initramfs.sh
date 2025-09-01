@@ -33,6 +33,17 @@ cd "$WORK_DIR"
 echo "Current directory: $(pwd)"
 echo "Contents: $(ls -la)"
 
+echo "Creating critical device nodes..."
+mknod -m 666 dev/null c 1 3
+mknod -m 666 dev/zero c 1 5
+mknod -m 666 dev/random c 1 8
+mknod -m 666 dev/urandom c 1 9
+mknod -m 660 dev/console c 5 1
+mknod -m 660 dev/tty c 5 0
+mknod -m 660 dev/tty0 c 4 0
+mknod -m 660 dev/tty1 c 4 1
+mknod -m 660 dev/ttyS0 c 4 64
+
 # Find where busybox-static was installed
 echo "Finding busybox binary location..."
 BUSYBOX_PATH=$(which busybox 2>/dev/null || find /bin /sbin /usr/bin /usr/sbin -name "busybox*" -type f 2>/dev/null | head -1)
@@ -63,7 +74,7 @@ cd bin
 for cmd in sh ash cat cp mv rm ls ln mkdir mount umount wget tar gzip gunzip \
            ip ping udhcpc grep awk sed cut sort head tail find xargs sleep \
            echo printf test tr dd blkid lsblk fdisk mkfs.ext4 mkfs.fat \
-           switch_root reboot poweroff; do
+           switch_root reboot poweroff modprobe; do
     ln -sf busybox "$cmd"
 done
 cd ..
@@ -71,7 +82,7 @@ cd ..
 # Also link in sbin
 cd sbin  
 for cmd in mount umount blkid mkfs.ext4 mkfs.fat fdisk switch_root \
-           ip route ifconfig; do
+           ip route ifconfig modprobe; do
     ln -sf /bin/busybox "$cmd"
 done
 cd ..
@@ -91,6 +102,17 @@ export PATH="/bin:/sbin:/usr/bin:/usr/sbin"
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t devtmpfs devtmpfs /dev
+
+# ADD THIS AFTER THE MOUNT COMMANDS (around line 89):
+# Load USB storage modules (critical for Pi 5)
+echo "Loading USB storage modules..."
+for mod in usb-storage uas sd_mod; do
+    modprobe $mod 2>/dev/null || echo "Module $mod not available"
+done
+
+# Wait for devices to settle
+echo "Waiting for devices..."
+sleep 3
 
 echo "Bringing up network interface..."
 # Network setup
@@ -287,18 +309,8 @@ EOF
 
 chmod +x init
 
-echo "4. Creating device nodes..."
-mknod dev/console c 5 1
-mknod dev/null c 1 3
-mknod dev/zero c 1 5
-
 echo "5. Building initramfs archive..."
 find . | cpio -o -H newc | gzip -9 > "$OUTPUT_FILE"
-
-echo "6. Creating updated cmdline.txt..."
-cat > "$(dirname "$OUTPUT_FILE")/cmdline.txt" << 'EOF'
-console=ttyS0,115200 console=tty1 root=/dev/ram0 init=/init rw
-EOF
 
 echo ""
 echo "=== InitramFS Build Complete! ==="
